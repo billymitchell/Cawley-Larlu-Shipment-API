@@ -14,13 +14,31 @@ async function processOrder(orderPayload) {
         // Log the incoming order payload for debugging purposes
         console.log('Processing order:', orderPayload);
 
-        // Send a POST request to the external endpoint with the order payload
+        // Sanitize the source_id by removing " REDO" and "-RESHIP"
+        if (orderPayload.source_id) {
+            orderPayload.source_id = orderPayload.source_id
+                .replace(' REDO', '')
+                .replace('-RESHIP', '');
+        }
+
+        // Remove shipment_date and add carrier_code and shipment_method to the payload
+        const modifiedPayload = {
+            ...orderPayload,
+            carrier_code: 'UPS',
+            shipment_method: 'Ground',
+        };
+        delete modifiedPayload.shipment_date;
+
+        // Log the modified payload for debugging purposes
+        console.log('Modified payload:', modifiedPayload);
+
+        // Send a POST request to the external endpoint with the modified payload
         const response = await fetch('https://orderdesk-single-order-ship-65ffd8ceba36.herokuapp.com/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(orderPayload),
+            body: JSON.stringify(modifiedPayload),
         });
 
         if (response.ok) {
